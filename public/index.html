@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="<%= BASE_URL %>favicon.png">
+    <title>元器件库</title>
+    <% if(process.env.NODE_ENV=== 'production'){ %>
+    <link rel="stylesheet" href="<%= BASE_URL %>cdn/element-ui/theme-chalk/index.css">
+    <% } %>
+</head>
+<body>
+<div id="app"></div>
+<% if(process.env.NODE_ENV=== 'production'){ %>
+<script src="<%= BASE_URL %>cdn/vue/vue.js" charset="utf-8"></script>
+<script src="<%= BASE_URL %>cdn/vuex/vuex.js" charset="utf-8"></script>
+<script src="<%= BASE_URL %>cdn/vue-router/vue-router.js" charset="utf-8"></script>
+<script src="<%= BASE_URL %>cdn/axios/axios.min.js" charset="utf-8"></script>
+<script src="<%= BASE_URL %>cdn/element-ui/index.js" charset="utf-8"></script>
+<% } %>
+</body>
+</html>
