@@ -42,7 +42,7 @@
       </el-form-item>
       <!-- 申请详情展示  -->
       <el-form-item v-if="detailFlag === 'boom'">
-        <boom-details></boom-details>
+        <boom-details :boomList="boomList"></boom-details>
       </el-form-item>
       <el-form-item v-else>
         <custom-add></custom-add>
@@ -71,7 +71,28 @@ export default {
         chargeman: '',
         picture: ""
       },
-      detailFlag: 'boom'
+      detailFlag: 'boom',
+      // 模拟boomlist的数据
+      boomList: [
+        {
+          _id: 1,
+          section: 1,
+          num: 'xxxx001',
+          count: 1,
+          needCount: 1000,
+          stock: 500,
+          preparatiuon: 5,
+        },
+        {
+          _id: 2,
+          section: 2,
+          num: 'xxxx002',
+          count: 3,
+          needCount: 2000,
+          stock: 800,
+          preparatiuon: 5,
+        }
+      ]
     }
   },
   components: {
@@ -80,8 +101,9 @@ export default {
     CustomAdd
   },
   methods: {
+    // 合同性质选择之后对组件进行条件渲染
     chooseNature (value) {
-      console.log(value, '=========================');
+      console.log(value)
 
     },
     onSubmit () {
