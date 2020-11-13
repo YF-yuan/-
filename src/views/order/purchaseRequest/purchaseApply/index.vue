@@ -1,18 +1,18 @@
 <template>
-  <!-- 代料页面 -->
-  <div id="selfharvest">
+  <!-- 申请需求页面 -->
+  <div id="substitude">
     <!-- 需求表单 -->
     <el-form ref="form" :model="form">
       <el-form-item label="合同性质">
-        <el-select v-model="form.nature" placeholder="请选择合同性质">
+        <el-select v-model="form.nature" placeholder="请选择合同性质" @change="selectType">
           <el-option label="代料" value="substitude"></el-option>
           <el-option label="自采" value="selfharvest"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item label="代工合同编号">
-        <el-select v-model="form.ContractNo" placeholder="请选择代工合同编号">
-          <el-option label="xxx001" value="shanghai"></el-option>
-          <el-option label="xxx002" value="beijing"></el-option>
+        <el-select v-model="form.ContractNo" filterable  placeholder="请选择代工合同编号">
+          <el-option label="YHZZ123445hfureu389" value="shanghai"></el-option>
+          <el-option label="YHZZ123445hfureu389" value="beijing"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item label="客户名称">
@@ -45,9 +45,10 @@
         <upload-image />
       </el-form-item>
     </el-form>
-    <!--  -->
+    <!-- 申请的主要材料展示 -->
     <div class="mainList">
-      <custom-add :materielList="materielList"/>
+      <boom-details v-if="showBoom" :boomList="boomList" />
+      <custom-add :materielList="materielList" v-else />
     </div>
 
     <div class="footer">
@@ -58,8 +59,9 @@
 </template>
 
 <script>
-import UploadImage from "@/components/uploadImage.vue";
-import CustomAdd from "./customAdd.vue";
+import UploadImage from "@/components/uploadImage.vue"
+import BoomDetails from "./boomDetails.vue"
+import CustomAdd from "./customAdd.vue"
 export default {
   data() {
     return {
@@ -72,6 +74,62 @@ export default {
         chargeman: "",
         picture: "",
       },
+      showBoom: true,
+      // 模拟boomlist的数据
+      boomList: [
+        {
+          goodname: 'A3131',
+          goodcount: 100,
+          data: [
+            {
+              _id: 1,
+              section: 1,
+              num: "xxxx001",
+              count: 1,
+              needCount: 1000,
+              stock: 1500,
+              preparatiuon: 5,
+              d_count: 0
+            },
+            {
+              _id: 2,
+              section: 2,
+              num: "xxxx002",
+              count: 3,
+              needCount: 2000,
+              stock: 800,
+              preparatiuon: 5,
+              d_count: 1200
+            },
+          ],
+        },
+        {
+          goodname: 'B4242',
+          goodcount: 300,
+          data: [
+            {
+              _id: 1,
+              section: 1,
+              num: "xxxx004",
+              count: 4,
+              needCount: 1000,
+              stock: 500,
+              preparatiuon: 5,
+              d_count: 500,
+            },
+            {
+              _id: 2,
+              section: 2,
+              num: "xxxx003",
+              count: 1,
+              needCount: 3000,
+              stock: 1500,
+              preparatiuon: 5,
+              d_count: 1500,
+            },
+          ],
+        },
+      ],
       materielList: [
         {
           id: 1,
@@ -79,26 +137,29 @@ export default {
           needcount: 1000
         },
         {
-          date: 2,
+          id: 2,
           num: "xxx002",
           needcount: 5000
         },
         {
-          date: 3,
+          id: 3,
           num: "xxx003",
           needcount: 4000
         },
         {
-          date: 4,
+          id: 4,
           num: "xxx004",
           needcount: 100
         }
       ]
-    }
+    };
+  },
+  created () {
   },
   components: {
     UploadImage,
-    CustomAdd,
+    BoomDetails,
+    CustomAdd
   },
   methods: {
     // 合同性质选择之后对组件进行条件渲染
@@ -108,12 +169,19 @@ export default {
     onReturn() {
       console.log("return");
     },
-  },
-};
+    selectType (e) {
+      if (e == 'selfharvest') {
+        this.showBoom = false
+      }else{
+        this.showBoom = true
+      }
+    }
+  }
+}
 </script>
 
 <style lang='less'>
-#selfharvest {
+#substitude {
   width: 100%;
   .el-form {
     width: 80%;

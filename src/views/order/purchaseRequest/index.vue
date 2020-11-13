@@ -50,7 +50,7 @@
 
         <el-drawer title="代料" :visible.sync="drawer" size="85%">
           <div>
-            <sub-stitude></sub-stitude>
+            <purchase-apply />
           </div>
         </el-drawer>
         <el-button
@@ -109,11 +109,11 @@
 
 <script>
 import $ from "jquery";
-import SubStitude from './substitude'
+import PurchaseApply from './purchaseApply'
 export default {
   name: "PurchaseRequest",
   components: {
-    SubStitude
+    PurchaseApply
   },
   data() {
     return {
