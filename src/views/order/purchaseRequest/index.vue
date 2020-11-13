@@ -1,120 +1,349 @@
 <template>
   <!-- 采购申请页面 -->
   <div id="purchaseRequest">
-    <!-- 需求表单 -->
-    <el-form ref="form" :model="form" label-width="80px">
-       <el-form-item label="合同性质">
-        <el-select v-model="form.nature" placeholder="请选择合同性质" @change="chooseNature(form.nature)">
-          <el-option label="代料" value="boom"></el-option>
-          <el-option label="自采" value="custom"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="代工合同编号">
-        <el-select v-model="form.ContractNo" placeholder="请选择代工合同编号">
-          <el-option label="0001" value="shanghai"></el-option>
-          <el-option label="0002" value="beijing"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="客户名称">
-        <el-input v-model="form.name"></el-input>
-      </el-form-item>
-      <el-form-item label="客户简称">
-        <el-input v-model="form.abbreviation"></el-input>
-      </el-form-item>
-      <el-form-item label="活动时间">
-        <el-col :span="11">
-          <el-date-picker
-            type="date"
-            placeholder="请选择日期"
-            v-model="form.date"
-            style="width: 100%"
-          ></el-date-picker>
-        </el-col>
-      </el-form-item>
-      <el-form-item label="负责人">
-        <el-select v-model="form.chargeman" placeholder="请选择负责人">
-          <el-option label="张三" value="shanghai"></el-option>
-          <el-option label="李四" value="beijing"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="上传附件">
-        <upload-image />
-      </el-form-item>
-      <!-- 申请详情展示  -->
-      <el-form-item v-if="detailFlag === 'boom'">
-        <boom-details :boomList="boomList"></boom-details>
-      </el-form-item>
-      <el-form-item v-else>
-        <custom-add></custom-add>
-      </el-form-item>
-      <el-form-item>
-        <el-button class="submitbtn" type="primary" @click="onSubmit">保存</el-button>
-        <el-button>返回</el-button>
-      </el-form-item>
-    </el-form>
+    <!-- 页面头部 -->
+    <div class="applyheader">
+      <el-form :inline="true" :model="formInline" class="demo-form-inline">
+        <el-form-item label="合同编号">
+          <el-input
+            v-model="formInline.user"
+            placeholder="请输入合同编号"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="客户简称">
+          <el-select v-model="formInline.region" placeholder="请选择客户简称">
+            <el-option label="阿里" value="ali"></el-option>
+            <el-option label="华为" value="huawei"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="formInline.region" placeholder="请选择状态">
+            <el-option label="未完成" value="doing"></el-option>
+            <el-option label="完成" value="done"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="负责人">
+          <el-select v-model="formInline.region" placeholder="请选择负责人">
+            <el-option label="张三" value="zhangsan"></el-option>
+            <el-option label="李四" value="lisi"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="el-icon-search" @click="onSearch"
+            >搜索</el-button
+          >
+          <el-button type="primary" @click="onClear">清空</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+    <!-- 申请列表 -->
+    <div class="applymain">
+      <div class="functionBtn">
+        <el-button
+          @click="drawer = true"
+          icon="el-icon-plus"
+          type="primary"
+          style="margin-left: 16px"
+        >
+          新增
+        </el-button>
+
+        <el-drawer title="代料" :visible.sync="drawer" size="85%">
+          <div>
+            <sub-stitude></sub-stitude>
+          </div>
+        </el-drawer>
+        <el-button
+          :loading="tableLoading"
+          icon="el-icon-download"
+          @click="getGoodList(1)"
+          size="small"
+          type="primary"
+          >导出
+        </el-button>
+      </div>
+      <div class="applytable">
+        <el-table :data="contractList" border style="width: 100%">
+          <el-table-column fixed prop="id" label="序号" width="50">
+          </el-table-column>
+          <el-table-column prop="number" label="合同编号" width="180">
+          </el-table-column>
+          <el-table-column prop="abbreviation" label="客户简称" width="100">
+          </el-table-column>
+          <el-table-column prop="type" label="类型" width="80">
+          </el-table-column>
+          <el-table-column prop="count" label="数量 " width="60">
+          </el-table-column>
+          <el-table-column prop="date" label="签订日期" width="100" height="40">
+          </el-table-column>
+          <el-table-column prop="status" label="状态" width="80">
+          </el-table-column>
+          <el-table-column prop="chargeman" label="负责人" width="80">
+          </el-table-column>
+          <el-table-column prop="approvalStu" label="审批状态" width="80">
+          </el-table-column>
+          <el-table-column fixed="right" label="操作" width="220">
+            <template slot-scope="scope">
+              <el-button
+                type="primary"
+                @click="handleClick(scope.row)"
+                size="small"
+                >查看</el-button
+              >
+              <el-button type="primary" to="/order/purchaseRequest/substitude">
+                编辑
+              </el-button>
+              <el-button type="primary" size="small">提交审批</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </div>
+    <!-- 分页 -->
+    <div class="pagination">
+      <el-pagination small layout="prev, pager, next" :total="50">
+      </el-pagination>
+    </div>
   </div>
 </template>
 
 <script>
-import UploadImage from '@/components/uploadImage.vue'
-import BoomDetails from './boomDetails.vue'
-import CustomAdd from './customAdd.vue'
+import $ from "jquery";
+import SubStitude from './substitude'
 export default {
+  name: "PurchaseRequest",
+  components: {
+    SubStitude
+  },
   data() {
     return {
-      form: {
-        nature: "",
-        ContractNo: '',
-        name: '',
-        abbreviation: '',
-        date: "",
-        chargeman: '',
-        picture: ""
+      drawer: false,
+      visible: false,
+      innerDrawer: false,
+      tableLoading: false,
+      formInline: {
+        user: "",
+        region: "",
       },
-      detailFlag: 'boom',
-      // 模拟boomlist的数据
-      boomList: [
+      contractList: [
         {
-          _id: 1,
-          section: 1,
-          num: 'xxxx001',
-          count: 1,
-          needCount: 1000,
-          stock: 500,
-          preparatiuon: 5,
+          id: 1,
+          number: "YHZZ123445hfureu389",
+          abbreviation: "拓恒水务",
+          type: "自采",
+          count: 0,
+          date: "2020-09-08",
+          status: "未完成",
+          chargeman: "张三",
+          approvalStu: "完成",
         },
         {
-          _id: 2,
-          section: 2,
-          num: 'xxxx002',
-          count: 3,
-          needCount: 2000,
-          stock: 800,
-          preparatiuon: 5,
-        }
-      ]
-    }
-  },
-  components: {
-    UploadImage,
-    BoomDetails,
-    CustomAdd
+          id: 2,
+          number: "YHZZ123445hfureu389",
+          abbreviation: "拓恒航空",
+          type: "代料",
+          count: 0,
+          date: "2020-09-08",
+          status: "未完成",
+          chargeman: "李四",
+          approvalStu: "完成",
+        },
+        {
+          id: 3,
+          number: "YHZZ123445hfureu389",
+          abbreviation: "拓恒无人机",
+          type: "代料",
+          count: 0,
+          date: "2020-09-08",
+          status: "未完成",
+          chargeman: "张三",
+          approvalStu: "完成",
+        },
+        {
+          id: 4,
+          number: "YHZZ123445hfureu389",
+          abbreviation: "拓攻机器人",
+          type: "自采",
+          count: 0,
+          date: "2020-09-08",
+          status: "未完成",
+          chargeman: "张三",
+          approvalStu: "完成",
+        },
+        {
+          id: 5,
+          number: "YHZZ123445hfureu389",
+          abbreviation: "拓恒技术",
+          type: "代料",
+          count: 0,
+          date: "2020-09-08",
+          status: "未完成",
+          chargeman: "张三",
+          approvalStu: "完成",
+        },
+        {
+          id: 6,
+          number: "YHZZ123445hfureu389",
+          abbreviation: "阿里巴巴",
+          type: "代料",
+          count: 0,
+          date: "2020-09-08",
+          status: "未完成",
+          chargeman: "张三",
+          approvalStu: "完成",
+        },
+        {
+          id: 7,
+          number: "YHZZ123445hfureu389",
+          abbreviation: "腾讯",
+          type: "自采",
+          count: 0,
+          date: "2020-09-08",
+          status: "未完成",
+          chargeman: "李四",
+          approvalStu: "完成",
+        },
+      ],
+    };
   },
   methods: {
-    // 合同性质选择之后对组件进行条件渲染
-    chooseNature (value) {
-      console.log(value)
-
-    },
-    onSubmit () {
+    onSearch() {
       console.log("submit!");
-    }
-  }
-}
+    },
+    onClear() {
+      console.log("clear");
+    },
+    handleClick(row) {
+      console.log(row);
+    },
+    addGood() {
+      this.visible = true;
+      this.$nextTick(function () {
+        this.visible = true;
+      });
+    },
+    handleClose(done) {
+      this.$confirm("还有未保存的工作哦确定关闭吗？")
+        .then((_) => {
+          done();
+        })
+        .catch((_) => {});
+    },
+    getGoodList(isExport) {
+      this.tableLoading = true;
+      let data = JSON.parse(JSON.stringify(this.searchParam));
+      let attributeKeys = [];
+      let attributeValues = [];
+      this.attributeList.map((item) => {
+        if (item.attributeValueIds && item.attributeValueIds.length > 0) {
+          attributeKeys.push(item.attributeKeyId);
+          attributeValues = attributeValues.concat(item.attributeValueIds);
+        }
+      });
+      data.attributeKeys = attributeKeys;
+      data.attributeValues = attributeValues;
+      if (isExport) {
+        this.exportGood(data);
+        return;
+      }
+      data.page = this.page;
+      data.pageSize = this.pageSize;
+      api
+        .getGoodList(data)
+        .then((res) => {
+          const { records, total } = res.data;
+          this.dataList = records ? records : [];
+          this.count = total ? parseInt(total) : 0;
+          this.tableLoading = false;
+        })
+        .catch((e) => {
+          this.dataList = [];
+          this.tableLoading = false;
+        });
+    },
+  },
+};
 </script>
 
 <style lang='less'>
-  .submitbtn {
-    background-color: #1890ff;
+element.style {
+  height: auto;
+}
+.route-box {
+  height: auto;
+}
+.el-form {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  .el-form-item {
+    width: 210px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .el-form-item__label {
+      height: 24px;
+    }
+    .el-form-item__content {
+      width: 140px;
+      height: 24px;
+      padding: 0;
+      margin: 0;
+      .el-input__inner {
+        width: 150px;
+        height: 24px;
+      }
+    }
+    .el-button {
+      width: 56px;
+      height: 24px;
+      line-height: 0;
+      padding: 0;
+    }
   }
+}
+.applymain {
+  width: 100%;
+  margin-top: 20px;
+  .functionBtn {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    .el-button {
+      width: 60px;
+      height: 24px;
+      margin-right: 10px;
+      line-height: 0;
+      padding: 0;
+    }
+  }
+  .applytable {
+    width: 100%;
+    margin-top: 10px;
+    .el-table {
+      td {
+        padding: 0;
+      }
+      th {
+        padding: 0;
+      }
+      .cell {
+        padding: 10px;
+        margin: 0;
+      }
+      .el-button {
+        width: 54px;
+        height: 26px;
+        line-height: 0;
+        padding: 0px;
+      }
+    }
+  }
+}
+.el-pagination {
+  width: auto;
+  margin-top: 20px;
+  text-align: center;
+}
 </style>
