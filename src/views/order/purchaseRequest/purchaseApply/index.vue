@@ -4,7 +4,7 @@
     <!-- 需求表单 -->
     <el-form ref="form" :model="form">
       <el-form-item label="合同性质">
-        <el-select v-model="form.nature" placeholder="请选择合同性质" @change="selectType">
+        <el-select v-model="form.nature" placeholder="请选择合同性质" @click="selectType">
           <el-option label="代料" value="substitude"></el-option>
           <el-option label="自采" value="selfharvest"></el-option>
         </el-select>
@@ -151,7 +151,9 @@ export default {
           num: "xxx004",
           needcount: 100
         }
-      ]
+      ],
+      // 选择的合同性质
+      natureSelect: '代料'
     };
   },
   created () {
@@ -169,11 +171,16 @@ export default {
     onReturn() {
       console.log("return");
     },
+    created () {
+
+    },
     selectType (e) {
       if (e == 'selfharvest') {
         this.showBoom = false
+        this.natureSelect = '自采'
       }else{
         this.showBoom = true
+        this.natureSelect = '代料'
       }
     }
   }

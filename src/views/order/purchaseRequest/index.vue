@@ -5,27 +5,23 @@
     <div class="applyheader">
       <el-form :inline="true" :model="formInline" class="demo-form-inline">
         <el-form-item label="合同编号">
-          <el-input
-            v-model="formInline.user"
-            placeholder="请输入合同编号"
-          ></el-input>
+         <el-select v-model="formInline.contractCode" filterable placeholder="请选择合同编号" @change="chooseCode">
+            <el-option v-for="item in codeList" :label="item" :value="item"></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="客户简称">
-          <el-select v-model="formInline.region" placeholder="请选择客户简称">
-            <el-option label="阿里" value="ali"></el-option>
-            <el-option label="华为" value="huawei"></el-option>
+          <el-select v-model="formInline.enterpriseId" filterable placeholder="请选择客户简称">
+            <el-option label="111" value="111"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="formInline.region" placeholder="请选择状态">
+          <el-select v-model="formInline.checkStatus" filterable placeholder="请选择状态">
             <el-option label="未完成" value="doing"></el-option>
-            <el-option label="完成" value="done"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="负责人">
-          <el-select v-model="formInline.region" placeholder="请选择负责人">
+          <el-select v-model="formInline.headerId" filterable placeholder="请选择负责人">
             <el-option label="张三" value="zhangsan"></el-option>
-            <el-option label="李四" value="lisi"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -47,10 +43,9 @@
         >
           新增
         </el-button>
-
-        <el-drawer title="代料" :visible.sync="drawer" size="85%">
+        <el-drawer :title="naturatxt" :visible.sync="drawer" size="85%">
           <div>
-            <purchase-apply />
+            <purchase-apply v-on:natura-select="NaturaSelect"/>
           </div>
         </el-drawer>
         <el-button
@@ -62,25 +57,26 @@
           >导出
         </el-button>
       </div>
+      <!-- 主题列表 -->
       <div class="applytable">
         <el-table :data="contractList" border style="width: 100%">
-          <el-table-column fixed prop="id" label="序号" width="50">
+          <el-table-column fixed prop="applyId" label="序号" width="50">
           </el-table-column>
-          <el-table-column prop="number" label="合同编号" width="180">
+          <el-table-column prop="contractCode" label="合同编号" width="180">
           </el-table-column>
-          <el-table-column prop="abbreviation" label="客户简称" width="100">
+          <el-table-column prop="enterpriseName" label="客户简称" width="100">
           </el-table-column>
           <el-table-column prop="type" label="类型" width="80">
           </el-table-column>
           <el-table-column prop="count" label="数量 " width="60">
           </el-table-column>
-          <el-table-column prop="date" label="签订日期" width="100" height="40">
+          <el-table-column prop="signTime" label="签订日期" width="100" height="40">
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="80">
+          <el-table-column prop="statusText" label="状态" width="80">
           </el-table-column>
-          <el-table-column prop="chargeman" label="负责人" width="80">
+          <el-table-column prop="headerName" label="负责人" width="80">
           </el-table-column>
-          <el-table-column prop="approvalStu" label="审批状态" width="80">
+          <el-table-column prop="checkStatusText" label="审批状态" width="80">
           </el-table-column>
           <el-table-column fixed="right" label="操作" width="220">
             <template slot-scope="scope">
@@ -101,7 +97,7 @@
     </div>
     <!-- 分页 -->
     <div class="pagination">
-      <el-pagination small layout="prev, pager, next" :total="50">
+      <el-pagination small layout="prev, pager, next" :total="50" @click="choosePage">
       </el-pagination>
     </div>
   </div>
@@ -110,6 +106,7 @@
 <script>
 import $ from "jquery";
 import PurchaseApply from './purchaseApply'
+import api from '@/api/order/purchaseRequest'
 export default {
   name: "PurchaseRequest",
   components: {
@@ -122,114 +119,72 @@ export default {
       innerDrawer: false,
       tableLoading: false,
       formInline: {
-        user: "",
-        region: "",
-      },
-      contractList: [
-        {
-          id: 1,
-          number: "YHZZ123445hfureu389",
-          abbreviation: "拓恒水务",
-          type: "自采",
-          count: 0,
-          date: "2020-09-08",
-          status: "未完成",
-          chargeman: "张三",
-          approvalStu: "完成",
+            "createTime": "2020-10-15 13:24:06",
+            "createUser": "admin",
+            "updateTime": null,
+            "updateUser": "",
+            "mark": 1,
+            "contractId": 2,
+            "contractCode": "ri0242u04",
+            "enterpriseId": 1,
+            "customerCode": "121321414",
+            "signTime": "2020-10-14",
+            "headerId": 14,
+            "fileName": "工厂需求.jpg",
+            "filePath": "temp/2020/10/15/570986740c-thumbnail.jpg",
+            "pcbFileName": "",
+            "pcbFilePath": "",
+            "checkStatus": 4
         },
-        {
-          id: 2,
-          number: "YHZZ123445hfureu389",
-          abbreviation: "拓恒航空",
-          type: "代料",
-          count: 0,
-          date: "2020-09-08",
-          status: "未完成",
-          chargeman: "李四",
-          approvalStu: "完成",
-        },
-        {
-          id: 3,
-          number: "YHZZ123445hfureu389",
-          abbreviation: "拓恒无人机",
-          type: "代料",
-          count: 0,
-          date: "2020-09-08",
-          status: "未完成",
-          chargeman: "张三",
-          approvalStu: "完成",
-        },
-        {
-          id: 4,
-          number: "YHZZ123445hfureu389",
-          abbreviation: "拓攻机器人",
-          type: "自采",
-          count: 0,
-          date: "2020-09-08",
-          status: "未完成",
-          chargeman: "张三",
-          approvalStu: "完成",
-        },
-        {
-          id: 5,
-          number: "YHZZ123445hfureu389",
-          abbreviation: "拓恒技术",
-          type: "代料",
-          count: 0,
-          date: "2020-09-08",
-          status: "未完成",
-          chargeman: "张三",
-          approvalStu: "完成",
-        },
-        {
-          id: 6,
-          number: "YHZZ123445hfureu389",
-          abbreviation: "阿里巴巴",
-          type: "代料",
-          count: 0,
-          date: "2020-09-08",
-          status: "未完成",
-          chargeman: "张三",
-          approvalStu: "完成",
-        },
-        {
-          id: 7,
-          number: "YHZZ123445hfureu389",
-          abbreviation: "腾讯",
-          type: "自采",
-          count: 0,
-          date: "2020-09-08",
-          status: "未完成",
-          chargeman: "李四",
-          approvalStu: "完成",
-        },
-      ],
-    };
+      contractList: [],
+      naturatxt: '代料',
+      codeList: [],
+    }
+  },
+  async created () {
+    // 获取页面初始化数据
+    const { data } = await api.getApplyList(1,50) 
+    this.contractList = data.records
+    api.getContractList().then((res)=>{
+      let formdata = res.data
+      for(let i = 0; i < formdata.length; i++) {
+        this.codeList.push(formdata[i].contractCode)
+      }
+    })
+    
+   
+  },
+  mounted() {
+    
   },
   methods: {
-    onSearch() {
+    // 接受子组件的传值
+    NaturaSelect (naturaSelect) {
+      this.naturatxt = naturaSelect
+    },
+    onSearch () {
       console.log("submit!");
     },
-    onClear() {
+    onClear () {
       console.log("clear");
     },
-    handleClick(row) {
+    handleClick (row) {
       console.log(row);
     },
-    addGood() {
+    addGood () {
       this.visible = true;
       this.$nextTick(function () {
         this.visible = true;
       });
     },
-    handleClose(done) {
+    handleClose (done) {
       this.$confirm("还有未保存的工作哦确定关闭吗？")
         .then((_) => {
           done();
         })
         .catch((_) => {});
     },
-    getGoodList(isExport) {
+    getGoodList (isExport) {
       this.tableLoading = true;
       let data = JSON.parse(JSON.stringify(this.searchParam));
       let attributeKeys = [];
@@ -261,8 +216,16 @@ export default {
           this.tableLoading = false;
         });
     },
+    // 获取页面数据
+    async chooseCode (e) { // 获取合同编码，根据相应的编码渲染数据
+      const { data } = await api.getContractByCode(e)
+      console.log(data)
+    },
+    choosePage (e) {
+      console.log(e,'页数信息')
+    }
   },
-};
+}
 </script>
 
 <style lang='less'>
