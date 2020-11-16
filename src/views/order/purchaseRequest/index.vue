@@ -1,65 +1,109 @@
 <template>
   <!-- 采购申请页面 -->
-  <div id="purchaseRequest">
+  <div class="main-box purchase-request">
     <!-- 页面头部 -->
-    <div class="applyheader">
-      <el-form :inline="true" :model="formInline" class="demo-form-inline">
-        <el-form-item label="合同编号">
-         <el-select v-model="formInline.contractCode" filterable placeholder="请选择合同编号" @change="chooseCode">
-            <el-option v-for="item in codeList" :label="item" :value="item"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="客户简称">
-          <el-select v-model="formInline.enterpriseId" filterable placeholder="请选择客户简称">
-            <el-option label="111" value="111"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="formInline.checkStatus" filterable placeholder="请选择状态">
-            <el-option label="未完成" value="doing"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="负责人">
-          <el-select v-model="formInline.headerId" filterable placeholder="请选择负责人">
-            <el-option label="张三" value="zhangsan"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" icon="el-icon-search" @click="onSearch"
-            >搜索</el-button
-          >
-          <el-button type="primary" @click="onClear">清空</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
+    <el-form :inline="true" v-model="searchParam" class="demo-form-inline">
+      <el-form-item label="合同编号">
+        <el-select
+          v-model="searchParam.contractCode"
+          filterable
+          size="small"
+          placeholder="请选择合同编号"
+          @change="chooseCode"
+        >
+          <el-option
+            v-for="item in codeList"
+            :label="item"
+            :value="item"
+          ></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="客户简称">
+        <el-select
+          v-model="searchParam.enterpriseId"
+          filterable
+          size="small"
+          placeholder="请选择客户简称"
+        >
+          <el-option
+            :key="index"
+            :value="item.enterpriseId"
+            :label="item.shortName"
+            v-for="(item, index) of enterpriseList"
+          ></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="状态">
+        <el-select
+          v-model="searchParam.checkStatus"
+          filterable
+          placeholder="请选择状态"
+        >
+          <el-option
+            v-for="(item, index) in statusList"
+            :key="index"
+            :label="item.dictKey"
+            :value="item.dictValue"
+          ></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="负责人">
+        <el-select
+          v-model="searchParam.headerId"
+          filterable
+          placeholder="请选择负责人"
+        >
+          <el-option
+            :key="index"
+            :value="item.userId"
+            :label="item.nickname"
+            v-for="(item, index) of userList"
+          ></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          :loading="tableLoading"
+          @click="search"
+          >搜索</el-button
+        >
+        <el-button
+          type="primary"
+          icon="el-icon-refresh-right"
+          @click="
+            total = 0;
+            initSearchParam();
+            search();
+          "
+          >清空</el-button
+        >
+      </el-form-item>
+    </el-form>
     <!-- 申请列表 -->
     <div class="applymain">
       <div class="functionBtn">
         <el-button
-          @click="drawer = true"
+          @click="add"
           icon="el-icon-plus"
           type="primary"
           style="margin-left: 16px"
         >
           新增
         </el-button>
-        <el-drawer :title="naturatxt" :visible.sync="drawer" size="85%">
-          <div>
-            <purchase-apply v-on:natura-select="NaturaSelect"/>
-          </div>
-        </el-drawer>
         <el-button
           :loading="tableLoading"
           icon="el-icon-download"
-          @click="getGoodList(1)"
+          @click="exportData"
           size="small"
           type="primary"
           >导出
         </el-button>
       </div>
-      <!-- 主题列表 -->
+
       <div class="applytable">
-        <el-table :data="contractList" border style="width: 100%">
+        <el-table :data="applyList" height="300" border style="width: 100%">
           <el-table-column fixed prop="applyId" label="序号" width="50">
           </el-table-column>
           <el-table-column prop="contractCode" label="合同编号" width="180">
@@ -68,9 +112,14 @@
           </el-table-column>
           <el-table-column prop="type" label="类型" width="80">
           </el-table-column>
-          <el-table-column prop="count" label="数量 " width="60">
+          <el-table-column prop="number" label="数量 " width="60">
           </el-table-column>
-          <el-table-column prop="signTime" label="签订日期" width="100" height="40">
+          <el-table-column
+            prop="signTime"
+            label="签订日期"
+            width="100"
+            height="40"
+          >
           </el-table-column>
           <el-table-column prop="statusText" label="状态" width="80">
           </el-table-column>
@@ -82,14 +131,24 @@
             <template slot-scope="scope">
               <el-button
                 type="primary"
-                @click="handleClick(scope.row)"
+                @click="lookShow(scope.row)"
                 size="small"
                 >查看</el-button
               >
-              <el-button type="primary" to="/order/purchaseRequest/substitude">
+              <el-button type="primary" @click="edit(scope.row)">
                 编辑
               </el-button>
-              <el-button type="primary" size="small">提交审批</el-button>
+              <el-button type="primary" size="small" @click="check(scope.row)"
+                >提交审批</el-button
+              >
+              <el-button
+                size="small"
+                type="primary"
+                icon="el-icon-view"
+                @click="checkInfo(scope.row)"
+                style="display: none"
+                >审批进度</el-button
+              >
             </template>
           </el-table-column>
         </el-table>
@@ -97,138 +156,158 @@
     </div>
     <!-- 分页 -->
     <div class="pagination">
-      <el-pagination small layout="prev, pager, next" :total="50" @click="choosePage">
-      </el-pagination>
+      <el-pagination
+        :current-page.sync="currentPage"
+        layout="total,prev,pager,next,jumper"
+        :total="total"
+        background
+        prev-text="上一页"
+        next-text="下一页"
+        :page-size="pageSize"
+        @current-change="handleCurrentChange"
+      ></el-pagination>
     </div>
+    <!-- drawer -->
+    <apply-form
+      :visible.sync="isShow"
+      :request-info="requestInfo"
+      :action="action"
+    ></apply-form>
   </div>
 </template>
 
 <script>
-import $ from "jquery";
-import PurchaseApply from './purchaseApply'
-import api from '@/api/order/purchaseRequest'
+import ApplyForm from "./ApplyForm";
+import api from "@/api/order/purchaseRequest";
+import { mapGetters } from "vuex";
+import FactoryForm from "../../good/factory/factoryForm.vue";
 export default {
-  name: "PurchaseRequest",
+  name: "purchase-request",
   components: {
-    PurchaseApply
+    ApplyForm,
   },
   data() {
     return {
-      drawer: false,
-      visible: false,
-      innerDrawer: false,
+      total: 3,
+      pageSize: parseInt((document.body.clientHeight - 290 - 43) / 44.5),
+      currentPage: 1,
       tableLoading: false,
-      formInline: {
-            "createTime": "2020-10-15 13:24:06",
-            "createUser": "admin",
-            "updateTime": null,
-            "updateUser": "",
-            "mark": 1,
-            "contractId": 2,
-            "contractCode": "ri0242u04",
-            "enterpriseId": 1,
-            "customerCode": "121321414",
-            "signTime": "2020-10-14",
-            "headerId": 14,
-            "fileName": "工厂需求.jpg",
-            "filePath": "temp/2020/10/15/570986740c-thumbnail.jpg",
-            "pcbFileName": "",
-            "pcbFilePath": "",
-            "checkStatus": 4
+      searchParam: {
+        contractCode: "",
+        enterpriseId: "",
+        status: "",
+        headerId: "",
+      },
+      statusList: [
+        { dictKey: "0", dictValue: "未完成" },
+        { dictKey: "1", dictValue: "已完成" },
+      ],
+      userList: [
+        {
+          userId: 0,
+          nickname: "张三",
         },
-      contractList: [],
-      naturatxt: '代料',
+        {
+          userId: 1,
+          nickname: "李四",
+        },
+      ],
+      enterpriseList: [
+        {
+          enterpriseId: 1,
+          shortName: "拓恒水务",
+        },
+        {
+          enterpriseId: 2,
+          shortName: "拓恒航空",
+        },
+      ],
+      applyList: [],
+      naturatxt: "代料",
       codeList: [],
-    }
+      isShow: false,
+      requestInfo: {},
+      action: "",
+      tableLoading: false,
+    };
   },
-  async created () {
+  computed: {
+    ...mapGetters(["direction", "drawerWidth"]),
+  },
+  created() {
     // 获取页面初始化数据
-    const { data } = await api.getApplyList(1,50) 
-    this.contractList = data.records
-    api.getContractList().then((res)=>{
-      let formdata = res.data
-      for(let i = 0; i < formdata.length; i++) {
-        this.codeList.push(formdata[i].contractCode)
-      }
-    })
-    
-   
+    this.getApplyList();
   },
-  mounted() {
-    
-  },
+  mounted() {},
   methods: {
-    // 接受子组件的传值
-    NaturaSelect (naturaSelect) {
-      this.naturatxt = naturaSelect
+    //
+    getApplyList() {
+      this.tableLoading = true;
+      api
+        .getApplyList(this.currentPage, this.pageSize, this.searchParam)
+        .then((res) => {
+          this.tableLoading = false;
+          this.applyList = res.data.records;
+          this.total = res.data.total;
+        });
     },
-    onSearch () {
+    // 接受子组件的传值
+    NaturaSelect(naturaSelect) {
+      this.naturatxt = naturaSelect;
+    },
+    search() {
       console.log("submit!");
     },
-    onClear () {
-      console.log("clear");
-    },
-    handleClick (row) {
-      console.log(row);
-    },
-    addGood () {
-      this.visible = true;
-      this.$nextTick(function () {
-        this.visible = true;
-      });
-    },
-    handleClose (done) {
+    handleClose(done) {
       this.$confirm("还有未保存的工作哦确定关闭吗？")
         .then((_) => {
           done();
         })
         .catch((_) => {});
     },
-    getGoodList (isExport) {
-      this.tableLoading = true;
-      let data = JSON.parse(JSON.stringify(this.searchParam));
-      let attributeKeys = [];
-      let attributeValues = [];
-      this.attributeList.map((item) => {
-        if (item.attributeValueIds && item.attributeValueIds.length > 0) {
-          attributeKeys.push(item.attributeKeyId);
-          attributeValues = attributeValues.concat(item.attributeValueIds);
-        }
-      });
-      data.attributeKeys = attributeKeys;
-      data.attributeValues = attributeValues;
-      if (isExport) {
-        this.exportGood(data);
-        return;
-      }
-      data.page = this.page;
-      data.pageSize = this.pageSize;
-      api
-        .getGoodList(data)
-        .then((res) => {
-          const { records, total } = res.data;
-          this.dataList = records ? records : [];
-          this.count = total ? parseInt(total) : 0;
-          this.tableLoading = false;
-        })
-        .catch((e) => {
-          this.dataList = [];
-          this.tableLoading = false;
-        });
-    },
     // 获取页面数据
-    async chooseCode (e) { // 获取合同编码，根据相应的编码渲染数据
-      const { data } = await api.getContractByCode(e)
-      console.log(data)
+    async chooseCode(e) {
+      // 获取合同编码，根据相应的编码渲染数据
+      const { data } = await api.getContractByCode(e);
+      console.log(data);
     },
-    choosePage (e) {
-      console.log(e,'页数信息')
-    }
+    choosePage(e) {
+      console.log(e, "页数信息");
+    },
+    handleCurrentChange(val) {
+      this.$refs.table.bodyWrapper.scrollTop = 0;
+      this.getPurchaseOrderList();
+    },
+    add() {
+      this.isShow = true;
+      this.action = "add";
+    },
+    initSearchParam() {
+      this.formInline = {
+        contractCode: "",
+        enterpriseId: "",
+        status: "",
+        headerId: "",
+      };
+    },
+    exportData() {},
+    lookShow(row) {
+      this.action = "lookShow";
+    },
+    edit(row) {
+      this.isShow = true;
+      this.action = "edit";
+      this.requestInfo = row;
+    },
+    check(row) {
+      this.actions = "check";
+    },
+    checkInfo(row) {},
   },
-}
+};
 </script>
 
-<style lang='less'>
+<style lang='less' scoped>
 element.style {
   height: auto;
 }
@@ -307,6 +386,6 @@ element.style {
 .el-pagination {
   width: auto;
   margin-top: 20px;
-  text-align: center;
+  text-align: end;
 }
 </style>
