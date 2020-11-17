@@ -13,9 +13,11 @@ export default {
       }
     })
   },
+
   getRoleList() {
     return axios.get('/api/order/approve/roleList')
   },
+
   editApprove(params) {
     return axios.post('/api/order/approve/edit',params)
   },

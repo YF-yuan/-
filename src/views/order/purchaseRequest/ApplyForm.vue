@@ -76,7 +76,7 @@
         <el-col :span="11">
           <el-form-item label="签订日期" required>
             <el-date-picker
-              v-model="paramInit.singTime"
+              v-model="paramInit.signTime"
               style="width: 200px"
               type="date"
               placeholder="选择日期"
@@ -101,7 +101,7 @@
       <span> <i style="color: #F56C6C">*</i>上传附件 </span>
       <div>
         <upload-image
-          :value="paramInit.value"
+          v-model="paramInit.filePath"
           :is-compress="true"
           style="margin-bottom: 10px"
         ></upload-image>
@@ -111,27 +111,27 @@
 
     <div class="order-info" v-if="listShow">
       <div class="info-header">
-        <span>
+        <p>
           <span>产品名称</span>
           {{ "14554" }}
-        </span>
-        <span>
+        </p>
+        <p>
           <span>数量</span>
           {{ "14554" }}
-        </span>
-        <span>
+        </p>
+        <p>
           <span>bom</span>
-          <el-button type="default" size="small">查看</el-button>
-        </span>
-        <span>
+          <el-button type="primary" size="small">查看</el-button>
+        </p>
+        <p>
           <span>查询编码</span>
           <el-select
             filterable
             size="small"
             style="width: 200px; margin-right: 5px"
           ></el-select>
-          <el-button type="default" size="small">查询</el-button>
-        </span>
+          <el-button type="primary" size="small">查询</el-button>
+        </p>
       </div>
       <el-table
         size="medium"
@@ -250,9 +250,20 @@
         ></el-table-column>
       </el-table>
     </div>
-
+    <div class="opinion">
+      <label for="opinionTxt">意见:</label>
+      <el-input
+        id="opinionTxt"
+        type="textarea"
+        :autosize="{ minRows: 2, maxRows: 4 }"
+        placeholder="请输入内容"
+        clearable
+        v-model="dealRemark"
+      >
+      </el-input>
+    </div>
     <div class="action">
-      <el-button type="primary" size="small">保存</el-button>
+      <el-button type="primary" size="small" @click="onSave">保存</el-button>
       <el-button type="primary" size="small" @click="handleClose"
         >返回</el-button
       >
@@ -283,10 +294,17 @@ export default {
       type: String,
       required: true,
     },
+    formDetail: {
+      type: Object,
+    },
   },
-
+  created() {
+    this.paramInit = this.formDetail;
+    this.dataList = this.paramInit.productList;
+  },
   data() {
     return {
+      dealRemark: "",
       dataList: [],
       tableLoading: false,
       disabled: false,
@@ -297,15 +315,6 @@ export default {
         { type: 1, value: "代料" },
       ],
       contractList: [],
-      paramInit: {
-        type: 1,
-        contractCode: "",
-        enterpriseName: "",
-        enterpriseId: 0,
-        singTime: "",
-        headerId: "",
-        value: [],
-      },
       listShow: true,
     };
   },
@@ -323,7 +332,8 @@ export default {
       };
     },
     handleClose() {
-      this.$emit("update:visible", false);
+      this.paramInit = {};
+      this.$emit("returnBack");
     },
     getcodeList() {
       api.getContractByCode(this.paramInit.contractCode).then((res) => {
@@ -345,6 +355,9 @@ export default {
         this.listShow = true;
       }
     },
+    onSave() {
+      
+    },
   },
 
   computed: {
@@ -355,20 +368,19 @@ export default {
     //   return this.paramInit;
     // },
   },
-
   watch: {
     visible(val) {
       if (val == false) {
-        this.resetParamInit();
+        this.resetParamInit()
       }
     },
     action(val) {
       if (val === "add") {
-        this.getContractCodeList();
+        this.getContractCodeList()
       }
-    },
-  },
-};
+    }
+  }
+}
 </script>
 
 <style scoped lang="less">
@@ -379,8 +391,11 @@ export default {
     justify-content: flex-end;
   }
 }
-
-.upload-info {
+.el-drawer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  .upload-info {
   margin-left: 8px;
   display: flex;
   span {
@@ -394,6 +409,9 @@ export default {
   margin: 0 0 20px 10px;
   .info-header {
     margin: 20px 0;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
     .el-button {
       width: 60px;
       height: 24px;
@@ -401,14 +419,34 @@ export default {
       line-height: 0;
       padding: 0;
     }
-    span {
+    p {
       margin-right: 50px;
-      font-size: 14px;
-      color: @fontColor;
-      i {
-        margin-right: 14px;
+      span {
+        margin-right: 10px;
+        font-size: 14px;
+        color: @fontColor;
+        i {
+          margin-right: 14px;
+        }
       }
     }
   }
 }
+.opinion {
+  width: 500px;
+  margin: 10px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  label {
+    width: 40px;
+    font-size: 14px;
+    color: #606266;
+  }
+  #opinionTxt {
+    width: 300px;
+  }
+}
+} 
+
 </style>

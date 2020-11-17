@@ -114,4 +114,7 @@
         background-color: #ffffff!important;
         color: #333333!important;
     }
+    i{
+        font-style:normal;
+    }
 </style>

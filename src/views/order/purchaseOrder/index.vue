@@ -125,17 +125,17 @@
         @current-change="handleCurrentChange"
       ></el-pagination>
     </div>
-    <edit-form :visible="isShow"></edit-form>
+    <order-form :visible.sync="isShow"></order-form>
   </div>
 </template>
 
 <script>
-import editForm from "./editForm"
+import orderForm from "./orderForm"
 import api from "@/api/order/purchaseOrder";
 import contractApi from "@/api/order/contract/list";
 export default {
   components: {
-    editForm
+    orderForm
   },
   data() {
     return {

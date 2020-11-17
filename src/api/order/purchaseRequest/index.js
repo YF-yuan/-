@@ -25,7 +25,7 @@ export default {
     infoApply (applyId) {
         return axios({
             method: "GET",
-            url: '/api/order/apply/info',
+            url: '/api/order/apply/info/'+applyId,
             params: {
                 applyId
             }
@@ -35,14 +35,7 @@ export default {
     submitApply (params) {
         return axios.post('/api/order/apply/submit',params)
     },
-    // 获取全部合同数组
-    getContractList () {
-        return axios({
-            method: "GET",
-            url: '/api/order/contract/getContractByCode',
-        })
-    },
-    // 根据合同编码获取相应合同数组
+    // 根据合同编码获取合同数据
     getContractByCode (contractCode) {
         return axios({
             method: "GET",

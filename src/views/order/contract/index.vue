@@ -13,7 +13,7 @@
             </el-form-item>
             <el-form-item label="产品名称">
                 <el-input
-                        clearable
+                        clearable  jj
                         maxlength="30"
                         v-model="searchParam.productName"
                         size="small"

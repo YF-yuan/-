@@ -10,6 +10,7 @@
           size="small"
           placeholder="请选择合同编号"
           @change="chooseCode"
+          height="30"
         >
           <el-option
             v-for="item in codeList"
@@ -40,7 +41,7 @@
           placeholder="请选择状态"
         >
           <el-option
-            v-for="(item, index) in statusList"
+            v-for="(item, index) in checkStatusList"
             :key="index"
             :label="item.dictKey"
             :value="item.dictValue"
@@ -103,7 +104,14 @@
       </div>
 
       <div class="applytable">
-        <el-table :data="applyList" height="300" border style="width: 100%">
+        <el-table
+          :span-method="objectSpanMethod"
+          v-loading="tableLoading"
+          :data="dataList"
+          height="300"
+          border
+          style="width: 100%"
+        >
           <el-table-column fixed prop="applyId" label="序号" width="50">
           </el-table-column>
           <el-table-column prop="contractCode" label="合同编号" width="180">
@@ -126,28 +134,43 @@
           <el-table-column prop="headerName" label="负责人" width="80">
           </el-table-column>
           <el-table-column prop="checkStatusText" label="审批状态" width="80">
+            <template slot-scope="{ row }">
+              <span v-if="row.bomStatus">{{
+                getCheckStatusName(row.bomStatus)
+              }}</span>
+            </template>
           </el-table-column>
           <el-table-column fixed="right" label="操作" width="220">
-            <template slot-scope="scope">
+            <template slot-scope="{ row }">
               <el-button
                 type="primary"
-                @click="lookShow(scope.row)"
+                @click="lookShow(row)"
+                icon="el-icon-view"
                 size="small"
                 >查看</el-button
               >
-              <el-button type="primary" @click="edit(scope.row)">
+              <el-button type="primary" @click="edit(row)" icon="el-icon-edit">
                 编辑
               </el-button>
-              <el-button type="primary" size="small" @click="check(scope.row)"
-                >提交审批</el-button
-              >
               <el-button
-                size="small"
+                @click="checkinfo(row)"
+                v-if="
+                  (row.bomStatus == 2 ||
+                    row.bomStatus == 3 ||
+                    row.bomStatus == 4) &&
+                  permission.order_bom_checkinfo
+                "
                 type="primary"
                 icon="el-icon-view"
-                @click="checkInfo(scope.row)"
-                style="display: none"
-                >审批进度</el-button
+                size="small"
+                >审批进度
+              </el-button>
+              <el-button
+                type="primary"
+                @click="check(row)"
+                icon="el-icon-edit"
+                size="small"
+                >提交审批</el-button
               >
             </template>
           </el-table-column>
@@ -169,10 +192,20 @@
     </div>
     <!-- drawer -->
     <apply-form
-      :visible.sync="isShow"
+      :isShow="isShow"
+      v-if="visible"
+      :visible="visible"
+      @returnBack="visible = false"
       :request-info="requestInfo"
       :action="action"
+      :formDetail='formDetail'
     ></apply-form>
+    <approval-form
+      v-if="checkVisible"
+      :visible="checkVisible"
+      :detailId="detailId"
+      @returnBack="checkVisible = false"
+    ></approval-form>
   </div>
 </template>
 
@@ -180,25 +213,28 @@
 import ApplyForm from "./ApplyForm";
 import api from "@/api/order/purchaseRequest";
 import { mapGetters } from "vuex";
-import FactoryForm from "../../good/factory/factoryForm.vue";
+import ApprovalForm from "./ApprovalForm.vue";
 export default {
   name: "purchase-request",
   components: {
     ApplyForm,
+    ApprovalForm,
   },
   data() {
     return {
+      detailId: 0,
       total: 3,
       pageSize: parseInt((document.body.clientHeight - 290 - 43) / 44.5),
       currentPage: 1,
       tableLoading: false,
+      checkVisible: false,
       searchParam: {
         contractCode: "",
         enterpriseId: "",
         status: "",
         headerId: "",
       },
-      statusList: [
+      checkStatusList: [
         { dictKey: "0", dictValue: "未完成" },
         { dictKey: "1", dictValue: "已完成" },
       ],
@@ -222,32 +258,33 @@ export default {
           shortName: "拓恒航空",
         },
       ],
-      applyList: [],
+      dataList: [],
       naturatxt: "代料",
       codeList: [],
       isShow: false,
       requestInfo: {},
       action: "",
-      tableLoading: false,
-    };
+      visible: false,
+      formDetail: {}
+    }
   },
   computed: {
-    ...mapGetters(["direction", "drawerWidth"]),
+    ...mapGetters(["direction", "drawerWidth", "permission"]),
   },
   created() {
     // 获取页面初始化数据
-    this.getApplyList();
+    this.getDataList();
   },
   mounted() {},
   methods: {
     //
-    getApplyList() {
+    getDataList() {
       this.tableLoading = true;
       api
         .getApplyList(this.currentPage, this.pageSize, this.searchParam)
         .then((res) => {
           this.tableLoading = false;
-          this.applyList = res.data.records;
+          this.dataList = res.data.records;
           this.total = res.data.total;
         });
     },
@@ -281,6 +318,9 @@ export default {
     add() {
       this.isShow = true;
       this.action = "add";
+      this.$nextTick(function () {
+        this.visible = true;
+      });
     },
     initSearchParam() {
       this.formInline = {
@@ -292,17 +332,67 @@ export default {
     },
     exportData() {},
     lookShow(row) {
-      this.action = "lookShow";
+      console.log(row,'purchaseRequest页面查看')
+      api.infoApply(row.applyId).then((res)=>{
+        this.formDetail = res.data
+        console.log(this.formDetail)
+        this.action = "lookShow";
+        this.isShow = true;
+        this.isCheck = 0;
+        this.$nextTick(function () {
+          this.visible = true;
+        })
+      })
+   
     },
     edit(row) {
       this.isShow = true;
       this.action = "edit";
       this.requestInfo = row;
+      this.$nextTick(function () {
+        this.visible = true;
+      });
     },
     check(row) {
-      this.actions = "check";
+      this.isShow = true
+      this.actions = "check"
+      this.requestInfo = row
+      this.$nextTick(function () {
+        this.visible = true;
+      })
     },
-    checkInfo(row) {},
+    checkinfo(row) {
+      this.detailId = row.detailId;
+      this.$nextTick(function () {
+        this.checkVisible = true;
+      });
+    },
+    getCheckStatusName(bomStatus) {
+      let child = this.checkStatusList.find(
+        (item) => item.dictKey == bomStatus
+      );
+      if (child) {
+        return child.dictValue;
+      } else {
+        return "";
+      }
+    },
+    // 合并列表项
+    objectSpanMethod({ row, column, rowIndex, columnIndex }) {
+      // if (columnIndex === 1 || columnIndex === 3 || columnIndex === 5) {
+      //   if (row.span) {
+      //     return {
+      //       rowspan: row.span,
+      //       colspan: 1
+      //     }
+      //   } else {
+      //     return {
+      //       rowspan: 0,
+      //       colspan: 0
+      //     }
+      //   }
+      // }
+    },
   },
 };
 </script>
@@ -342,6 +432,7 @@ element.style {
       height: 24px;
       line-height: 0;
       padding: 0;
+      font-size: 14px;
     }
   }
 }
@@ -355,6 +446,7 @@ element.style {
     .el-button {
       width: 60px;
       height: 24px;
+      font-size: 12px;
       margin-right: 10px;
       line-height: 0;
       padding: 0;
@@ -375,10 +467,9 @@ element.style {
         margin: 0;
       }
       .el-button {
-        width: 54px;
-        height: 26px;
-        line-height: 0;
-        padding: 0px;
+        height: 24px;
+        padding: 2px;
+        font-size: 12px;
       }
     }
   }
